@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include<utility> 
+
 //#include"utils/utils.h" 
 struct Window {
     GLFWwindow *window ; 
@@ -78,23 +80,18 @@ struct Shader {
 } ; Shader shader ;
 
 
-struct Action {
-    glm::mat4 size = glm::scale(glm::mat4(1.f) , glm::vec3(.2f,.2f,.2f)) ;
+struct Paddle_1 {
+    glm::mat4 size = glm::scale(glm::mat4(1.f) , glm::vec3(.3f,.3f,.3f)) ;
     
     glm::mat4 padd_1 = glm::mat4(1.f) ; // initalizing pad 1 pos
-    glm::mat4 padd_2 = glm::mat4(1.f) ; // initalizing pad 2 pos 
     
-    // padd_1 pos // 
-    GLfloat posX = -.8f  ;  // would move to array instead of int 
-    GLfloat posY = .0f  ; 
-
     // padd_2 pos //     
-    GLfloat PosX = .8f  ; 
+    
+    GLfloat PosX = .97f  ; 
     GLfloat PosY = .0f  ; 
-
-    Action(){
-        padd_1 = glm::translate(padd_1, glm::vec3(PosX ,PosY,.0f)) ;
-        padd_2 = glm::translate(padd_2 , glm::vec3(posX ,posY,.0f)) ;
+    
+    Paddle_1(){
+        padd_1 = glm::translate(padd_1, glm::vec3(PosX ,PosY,.0f)) * size ;
         
     }
     
@@ -102,14 +99,68 @@ struct Action {
         GLuint pos = glGetUniformLocation(shader_program ,"pos") ;
         glUniformMatrix4fv(pos,1,GL_FALSE ,glm::value_ptr(padd_1)) ;
     }
+    
+    void pad_1_control(GLFWwindow *window){
+        auto arry = std::make_pair(PosX,PosY) ;
+    
+        if(glfwGetKey(window,GLFW_KEY_I)==GLFW_PRESS){
+            PosY += .002f ;
+            // padd_1 = glm::translate(glm::mat4(1.f), glm::vec3(PosX ,PosY,.0f)) * size ;
+            //std::cout<<"paddle_1 :"<<"["<<arry.first << " , " << arry.second <<"]"<<"\n";
+        }
+
+        if(glfwGetKey(window,GLFW_KEY_K)==GLFW_PRESS){
+            PosY -= .002f ;
+           // std::cout<<"paddle_1 :"<<"["<<arry.first << " , " << arry.second <<"]"<<"\n";             
+        }
+        padd_1 = glm::translate(glm::mat4(1.0f), glm::vec3(PosX ,PosY,.0f)) * size ;
+       
+    }
+}; Paddle_1 move_paddle_1  ;
+
+
+struct Paddle_2 {
+    glm::mat4 size = glm::scale(glm::mat4(1.f) , glm::vec3(.3f,.3f,.3f)) ;
+    
+    glm::mat4 padd_2 = glm::mat4(1.f) ; // initalizing pad 2 pos 
+    
+    // padd_1 pos // 
+    GLfloat posX = -.8f  ;  // would move to array instead of int 
+    GLfloat posY = .0f  ; 
+
+    // padd_2 pos //     
+    Paddle_2(){
+        padd_2 = glm::translate(padd_2 , glm::vec3(posX ,posY,.0f) ) *size ;
+        
+    }    
     void run_pad2(GLuint shader_program) {
         GLuint pos = glGetUniformLocation(shader_program ,"pos") ;
         glUniformMatrix4fv(pos,1,GL_FALSE ,glm::value_ptr(padd_2)) ;
     }
     
+    void pad_2_control(GLFWwindow *window){
+        auto arry = std::make_pair(posX,posY) ;
+    
+        if(glfwGetKey(window,GLFW_KEY_W)==GLFW_PRESS){
+            posY += .002f ;
+           std::cout<<"paddle_2_pos : "<<"["<<arry.first<<","<<arry.second<<"] \n";
+        }
+        
+        if(glfwGetKey(window,GLFW_KEY_S)==GLFW_PRESS){
+            posY -= .002f ;
+           std::cout<<"paddle_2_pos : "<<"["<<arry.first<<","<<arry.second<<"] \n";
+        }
+        padd_2 = glm::translate(glm::mat4(1.0f), glm::vec3(posX ,posY,.0f) ) *size ;
+// creatin boundar for the wall //   
+        if (posY > .86){
+            posY = .86 ;
+        }
+        if (posY < -.86){
+            posY = -.86 ;
+        }
+    }
 
-}; Action move  ;
-
+}; Paddle_2 move_paddle_2  ;
 
 int main (){
     Engine.makeWindow() ;
@@ -160,10 +211,12 @@ int main (){
         glUseProgram(shader.shader_program) ;
         glBindVertexArray(vao) ;
 
-        move.run_pad1(shader.shader_program) ;
+        move_paddle_1.pad_1_control(Engine.window) ;
+        move_paddle_1.run_pad1(shader.shader_program) ;
         glDrawElements(GL_TRIANGLES , 6 ,GL_UNSIGNED_INT ,0); 
 
-        move.run_pad2(shader.shader_program) ;
+        move_paddle_2.pad_2_control(Engine.window) ;
+        move_paddle_2.run_pad2(shader.shader_program) ;
         glDrawElements(GL_TRIANGLES , 6 ,GL_UNSIGNED_INT ,0); 
         
 
