@@ -5,8 +5,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include<utility> 
+#include<thread>
+//#include"utils/utils.h"
 
-//#include"utils/utils.h" 
 struct Window {
     GLFWwindow *window ; 
     Window (){
@@ -82,17 +83,13 @@ struct Shader {
 
 struct Paddle_1 {
     glm::mat4 size = glm::scale(glm::mat4(1.f) , glm::vec3(.3f,.3f,.3f)) ;
-    
     glm::mat4 padd_1 = glm::mat4(1.f) ; // initalizing pad 1 pos
-    
     // padd_2 pos //     
-    
     GLfloat PosX = .97f  ; 
     GLfloat PosY = .0f  ; 
     
     Paddle_1(){
         padd_1 = glm::translate(padd_1, glm::vec3(PosX ,PosY,.0f)) * size ;
-        
     }
     
     void run_pad1(GLuint shader_program) {
@@ -102,7 +99,6 @@ struct Paddle_1 {
     
     void pad_1_control(GLFWwindow *window){
         auto arry = std::make_pair(PosX,PosY) ;
-    
         if(glfwGetKey(window,GLFW_KEY_I)==GLFW_PRESS){
             PosY += .002f ;
             // padd_1 = glm::translate(glm::mat4(1.f), glm::vec3(PosX ,PosY,.0f)) * size ;
@@ -114,14 +110,22 @@ struct Paddle_1 {
            // std::cout<<"paddle_1 :"<<"["<<arry.first << " , " << arry.second <<"]"<<"\n";             
         }
         padd_1 = glm::translate(glm::mat4(1.0f), glm::vec3(PosX ,PosY,.0f)) * size ;
-       
+        // creatin boundar for the wall //   
+        if (PosY > .86){
+            PosY = .86 ;
+        }
+        if (PosY < -.86){
+            PosY = -.86 ;
+        }
     }
+
+
+    
 }; Paddle_1 move_paddle_1  ;
 
 
 struct Paddle_2 {
     glm::mat4 size = glm::scale(glm::mat4(1.f) , glm::vec3(.3f,.3f,.3f)) ;
-    
     glm::mat4 padd_2 = glm::mat4(1.f) ; // initalizing pad 2 pos 
     
     // padd_1 pos // 
@@ -139,16 +143,16 @@ struct Paddle_2 {
     }
     
     void pad_2_control(GLFWwindow *window){
-        auto arry = std::make_pair(posX,posY) ;
+        auto arry = std::make_pair(&posX,&posY) ;
     
         if(glfwGetKey(window,GLFW_KEY_W)==GLFW_PRESS){
             posY += .002f ;
-           std::cout<<"paddle_2_pos : "<<"["<<arry.first<<","<<arry.second<<"] \n";
+        //    std::cout<<"paddle_2_pos : "<<"["<<*arry.first<<","<<*arry.second<<"] \n";
         }
         
         if(glfwGetKey(window,GLFW_KEY_S)==GLFW_PRESS){
             posY -= .002f ;
-           std::cout<<"paddle_2_pos : "<<"["<<arry.first<<","<<arry.second<<"] \n";
+        //    std::cout<<"paddle_2_pos : "<<"["<<arry.first<<","<<arry.second<<"] \n";
         }
         padd_2 = glm::translate(glm::mat4(1.0f), glm::vec3(posX ,posY,.0f) ) *size ;
 // creatin boundar for the wall //   
@@ -161,6 +165,28 @@ struct Paddle_2 {
     }
 
 }; Paddle_2 move_paddle_2  ;
+
+
+struct Ball {
+    glm::mat4 ball_pos = glm::mat4(1.f) ;
+    glm::mat4 size = glm::scale(glm::mat4(1.f),glm::vec3(.2f,.2f,.2f)) ;
+    float posx = .0f ;
+    float posy = .0f ;
+
+    Ball (){
+        ball_pos = glm::translate(glm::mat4(1.f) ,glm::vec3(posx,posy,0.f)) *size ;
+    }
+
+    void init_ball(GLuint shader_program){
+        GLuint pos = glGetUniformLocation(shader_program ,"pos") ;
+        glUniformMatrix4fv(pos ,1,GL_FALSE ,glm::value_ptr(ball_pos));
+    
+    } ; 
+    
+} ;Ball ball ;
+
+
+
 
 int main (){
     Engine.makeWindow() ;
@@ -205,6 +231,36 @@ int main (){
     glBindVertexArray(0) ;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER ,0) ;
 
+// =========================== ball =================================== // 
+
+    std::vector<float> circle_vertex ; 
+
+    for (int i = 0 ; i < 32 ; i++){
+        float angle  = 2.f * 3.142* i / 32 ;
+        float x = .2*std::cos(angle) ;
+        float y = .2*std::sin(angle) ;
+        
+        circle_vertex.push_back(x) ;
+        circle_vertex.push_back(y) ;
+    }
+
+
+    GLuint circle_vbo , circle_vao ; 
+
+    glGenBuffers(1,&circle_vbo) ;
+    glGenVertexArrays(1,&circle_vao) ;
+
+
+    glBindVertexArray(circle_vao) ;
+
+    glBindBuffer(GL_ARRAY_BUFFER , circle_vbo);
+    glBufferData(GL_ARRAY_BUFFER,circle_vertex.size()*sizeof(float),circle_vertex.data(),GL_STATIC_DRAW) ;
+    
+    glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE , 2*sizeof(float) ,(void*)0) ;
+    glEnableVertexAttribArray(0) ;
+
+
+
     while (!glfwWindowShouldClose(Engine.window)){
         glClearColor(.2f,.7f,.1f,1.f) ;
         glClear(GL_COLOR_BUFFER_BIT) ;
@@ -218,6 +274,10 @@ int main (){
         move_paddle_2.pad_2_control(Engine.window) ;
         move_paddle_2.run_pad2(shader.shader_program) ;
         glDrawElements(GL_TRIANGLES , 6 ,GL_UNSIGNED_INT ,0); 
+        
+        glBindVertexArray(circle_vao) ;
+        ball.init_ball(shader.shader_program) ;
+        glDrawArrays(GL_TRIANGLE_FAN,0,32) ;
         
 
         glfwSwapBuffers(Engine.window) ;
