@@ -169,14 +169,12 @@ struct Paddle_2 {
 
 struct Ball {
     glm::mat4 ball_pos = glm::mat4(1.f) ;
-    glm::mat4 size = glm::scale(glm::mat4(1.f),glm::vec3(.5f,.5f,.5f)) ;
+    glm::mat4 size = glm::scale(glm::mat4(1.f),glm::vec3(.3f,.3f,.3f)) ;
     float posx = .0f ;
     float posy = .0f ;
     
-    float speedX = .0001f ; 
-    float speedY = .0001f ;
-
-
+    float speedX = .001f ; 
+    float speedY = .001f ;
 
     Ball (){
         ball_pos = glm::translate(glm::mat4(1.f) ,glm::vec3(posx,posy,0.f)) *size;
@@ -187,27 +185,28 @@ struct Ball {
         glUniformMatrix4fv(pos ,1,GL_FALSE ,glm::value_ptr(ball_pos));
     
     } ; 
-    void coll_check(){
-        if (posy > 0.84){
-            posy += -speedY ;
-        }
 
-    }
     void move_ball(){
         posy += speedY ;
-        
-        if(posy > .86){
-            posy += -speedY ;
+        posx += speedX ; 
+
+        if (posy >.9f && speedY > 0){
+            speedY = -speedY ;
         }
-        
-        if(posy < .86){
-            posy += speedY ;
+        if (posy < -.9f && speedY < 0){
+            speedY = -speedY ; 
         }
 
+        if (posx > 1.f ){
+            speedX = -speedX ;
+        }
+        if (posx < -1.f ){
+            speedX = -speedX ; 
+        }
 
+        
         ball_pos = glm::translate(glm::mat4(1.f),glm::vec3(posx,posy,0.f))*size ;
-        
-        
+       
     }
 
     
@@ -265,7 +264,7 @@ int main (){
 
     for (int i = 0 ; i < 32 ; i++){
         float angle  = 2.f * 3.142* i / 32 ;
-        float x = .2*std::cos(angle) ;
+        float x = .2*std::cos(angle) ; // radius is .2
         float y = .2*std::sin(angle) * 1.3333333f ;
         
         circle_vertex.push_back(x) ;
