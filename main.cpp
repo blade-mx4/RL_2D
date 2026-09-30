@@ -169,12 +169,17 @@ struct Paddle_2 {
 
 struct Ball {
     glm::mat4 ball_pos = glm::mat4(1.f) ;
-    glm::mat4 size = glm::scale(glm::mat4(1.f),glm::vec3(.2f,.2f,.2f)) ;
+    glm::mat4 size = glm::scale(glm::mat4(1.f),glm::vec3(.5f,.5f,.5f)) ;
     float posx = .0f ;
     float posy = .0f ;
+    
+    float speedX = .0001f ; 
+    float speedY = .0001f ;
+
+
 
     Ball (){
-        ball_pos = glm::translate(glm::mat4(1.f) ,glm::vec3(posx,posy,0.f)) *size ;
+        ball_pos = glm::translate(glm::mat4(1.f) ,glm::vec3(posx,posy,0.f)) *size;
     }
 
     void init_ball(GLuint shader_program){
@@ -182,8 +187,31 @@ struct Ball {
         glUniformMatrix4fv(pos ,1,GL_FALSE ,glm::value_ptr(ball_pos));
     
     } ; 
+    void coll_check(){
+        if (posy > 0.84){
+            posy += -speedY ;
+        }
+
+    }
+    void move_ball(){
+        posy += speedY ;
+        
+        if(posy > .86){
+            posy += -speedY ;
+        }
+        
+        if(posy < .86){
+            posy += speedY ;
+        }
+
+
+        ball_pos = glm::translate(glm::mat4(1.f),glm::vec3(posx,posy,0.f))*size ;
+        
+        
+    }
+
     
-} ;Ball ball ;
+};Ball ball ;
 
 
 
@@ -238,7 +266,7 @@ int main (){
     for (int i = 0 ; i < 32 ; i++){
         float angle  = 2.f * 3.142* i / 32 ;
         float x = .2*std::cos(angle) ;
-        float y = .2*std::sin(angle) ;
+        float y = .2*std::sin(angle) * 1.3333333f ;
         
         circle_vertex.push_back(x) ;
         circle_vertex.push_back(y) ;
@@ -276,6 +304,7 @@ int main (){
         glDrawElements(GL_TRIANGLES , 6 ,GL_UNSIGNED_INT ,0); 
         
         glBindVertexArray(circle_vao) ;
+        ball.move_ball();
         ball.init_ball(shader.shader_program) ;
         glDrawArrays(GL_TRIANGLE_FAN,0,32) ;
         
