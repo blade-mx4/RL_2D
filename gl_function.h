@@ -109,6 +109,13 @@ struct Ball {
     void move_ball() ;
 };
 
+struct Collison{
+    float left , right , bottom , top ; 
+    
+
+
+
+} ;
 // =============== Implementation  ============== //  
 
 // =========== Engine ============= // 
